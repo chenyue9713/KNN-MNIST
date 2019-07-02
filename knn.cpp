@@ -7,56 +7,51 @@ using namespace std;
 #include<queue>
 
 typedef pair<double, uint8> distLabel;
-typedef pair<uint8, uint8> labelCounter;
 
 uint32 KNN(MNISTDataset &trainSet, MNISTDataset &testSet, uint32 k, uint32 max, bool verbose)
-{    
-    uint32 training_length = trainSet.getNumImages();
-    const MNISTImage* test_image;
-    const MNISTImage* train_image;
-    uint8 classifications[max];
-    uint32 numCorrect = 0;
+{
+	uint32 trainSetNum = trainSet.getNumImages();
+	const MNISTImage* testImg;
+	const MNISTImage* trainImg;
+	uint32 Numcurrect = 0;
 
-    
-    for(uint32 i = 0; i < max; i++){
-        test_image = testSet.getImage(i);
-        priority_queue<distLabel, vector<distLabel>, greater<distLabel> > imgQueue;
-        for(uint32 j = 0; j < training_length; j++){
-            train_image = trainSet.getImage(j);
-            double current_distance = (*test_image).distance(train_image);
-            uint8 current_label = (*train_image).getLabel();
-            distLabel current_image;
-            current_image.first = current_distance;
-            current_image.second = current_label;
-            imgQueue.push(current_image);
-        }
-        //Counts label frequency, stores in array by index
-        uint32 labelFreq[10];
-        for(uint32 iter = 0; iter < k; iter++){
-            distLabel neighbor = imgQueue.top();
-            labelFreq[neighbor.second] += 1;
-            imgQueue.pop();
-        }
-        uint8 prevailing_label = 0;
-        uint8 highest_frequency = 0;
-        //Picks the most frequent label
-        for(uint8 check_label = 0; check_label < 10; check_label++){
-            if(labelFreq[check_label] > highest_frequency){
-                prevailing_label = check_label;
-            }
-            labelFreq[check_label] = 0;
-        }
-            
-        classifications[i] = prevailing_label;
-    }
+	
+	for (uint32 i = 0; i < max; i++) {
+		testImg = testSet.getImage(i);
+		int testLabel = testImg->getLabel();
+		priority_queue<distLabel, vector<distLabel>, greater<distLabel>> imgqueue;
+		for (uint32 j = 0; j < trainSetNum; j++) {
+			trainImg = trainSet.getImage(j);
+			uint8 trainLabel = trainImg->getLabel();
+			double dist = trainImg->distance(testImg);
+			imgqueue.push(make_pair(dist, trainLabel));
+		}
 
-    for(uint32 i = 0; i < max; i++){
-        
-        if(classifications[i] == (*testSet.getImage(i)).getLabel()){
-            numCorrect++;
-        }
-    }
+		uint8 Labelcounter[10] = {0,0,0,0,0,0,0,0,0,0};
+		for (uint8 j = 0; j < k; j++) {
+			distLabel dlpair = imgqueue.top();
+			Labelcounter[dlpair.second] += 1;
+			imgqueue.pop();
+		}
 
-    return numCorrect;
+		uint8 highest_count = 0;
+		uint8 highest_label = 0;
+		for (uint8 j = 0; j < 10; j++) {
+			if (Labelcounter[j] > highest_count) {
+				highest_label = j;
+				highest_count = Labelcounter[j];
+			}
+
+		}
+
+		if (highest_label == testLabel) {
+			Numcurrect++;
+		}
+		
+	}
+
+	return Numcurrect;
+   
 }
+
 
